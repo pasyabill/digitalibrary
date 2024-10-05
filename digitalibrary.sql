@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 26, 2024 at 10:59 AM
+-- Generation Time: Oct 05, 2024 at 08:23 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.0.26
 
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `buku` (
   `kategori` enum('novel','komik','ensiklopedi','majalah') NOT NULL,
   `img` varchar(100) NOT NULL,
   PRIMARY KEY (`id_buku`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `buku`
@@ -151,23 +151,26 @@ CREATE TABLE IF NOT EXISTS `user` (
   `id_user` int NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `role` enum('user','admin') NOT NULL,
   `email` varchar(255) NOT NULL,
   `nama_lengkap` varchar(255) NOT NULL,
   `alamat` text NOT NULL,
   PRIMARY KEY (`id_user`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`id_user`, `username`, `password`, `email`, `nama_lengkap`, `alamat`) VALUES
-(1, 'pasya', 'a8f5f167f44f4964e6c998dee827110c', 'salsabila@gmail.com', 'aspasya', 'amerika'),
-(2, 'salsa', '$2y$10$/Lq6O9n2q2J3J67qKUk9EOtEu0UI4ZxVnJbsQjIxRkIa4.BudiNy.', 'salsa@gmail.com', 'salsabila', 'indonesia'),
-(3, 'www', '85e1c5fcd281659a09398f110f2d039f', 'ww@example.com', 'wwww', 'wwww'),
-(4, 'zoorozuya', '827ccb0eea8a706c4c34a16891f84e7b', 'zoorozuya@gmail.com', 'shiroyasha', 'jepang'),
-(5, 'testing', '5b0975e3ed5e8d8657dc14c0a1eb4f6c', 'testing@example.com', 'tess', 'tess'),
-(6, 'zara', 'b35f8922ff1d54a5aff55a1d4107e245', 'zara@gmail.com', 'yara', 'secang');
+INSERT INTO `user` (`id_user`, `username`, `password`, `role`, `email`, `nama_lengkap`, `alamat`) VALUES
+(1, 'pasya', 'a8f5f167f44f4964e6c998dee827110c', 'user', 'salsabila@gmail.com', 'aspasya', 'amerika'),
+(2, 'salsa', '$2y$10$/Lq6O9n2q2J3J67qKUk9EOtEu0UI4ZxVnJbsQjIxRkIa4.BudiNy.', 'user', 'salsa@gmail.com', 'salsabila', 'indonesia'),
+(3, 'www', '85e1c5fcd281659a09398f110f2d039f', 'user', 'ww@example.com', 'wwww', 'wwww'),
+(4, 'zoorozuya', '827ccb0eea8a706c4c34a16891f84e7b', 'user', 'zoorozuya@gmail.com', 'shiroyasha', 'jepang'),
+(5, 'testing', '5b0975e3ed5e8d8657dc14c0a1eb4f6c', 'user', 'testing@example.com', 'tess', 'tess'),
+(6, 'zara', 'b35f8922ff1d54a5aff55a1d4107e245', 'user', 'zara@gmail.com', 'yara', 'secang'),
+(7, 'salsabila', '$2y$10$zgWa32.i0npGsFNyZ7Q44eFGA86yBJvB55C4ZrMzvVT3pa0SsRYaa', 'admin', 'admin@gmail.com', 'Aspasya Salsabila', 'Bekasi'),
+(8, 'zoorozuyyie', '$2y$10$2Tqp4RU5rnqoM8mCL3/KHOPrS7WKHFyjwxI6J26SdjVtWa/.PPCxC', 'user', 'user@gmail.com', 'shiroyasha', 'depok');
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

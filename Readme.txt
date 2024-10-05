@@ -6,4 +6,5 @@ Author: BootstrapMade.com
 License: https://bootstrapmade.com/license/
 
 Latihan UK kompetensi keahlian RPL/PPLG Aspasya Salsabila SMK N 2 Magelang
-ig : @aespasya
+ig : @aespasya 
+bro knp kmu masuk rpl bro?

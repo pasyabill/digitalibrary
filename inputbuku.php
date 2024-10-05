@@ -59,10 +59,10 @@
         $tahun_terbit = $_POST['tahun_terbit'];
         $kategori = $_POST['kategori'];
         $img = $_POST['img'];
-        $sql = "INSERT INTO `buku` (`id_buku`, `judul`, `penulis`, `penerbit`, `tahun_terbit`,`status`, `kategori`, `img`) VALUES ('$id_buku', '$judul', '$penulis', '$penerbit', '$tahun_terbit','tersedia', '$kategori', '$img');";
+        $sql = "INSERT INTO `buku` (`judul`, `penulis`, `penerbit`, `tahun_terbit`,`status`, `kategori`, `img`) VALUES ('$judul', '$penulis', '$penerbit', '$tahun_terbit','tersedia', '$kategori', '$img');";
         $query = mysqli_query($koneksi,$sql);
         if ($query) {
-            header("Location: index.php");
+            header("Location: admin.php");
             exit();
         } else {
             echo "Data gagal disimpan.";

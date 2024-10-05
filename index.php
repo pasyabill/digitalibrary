@@ -45,37 +45,24 @@
         <ul>
           <li><a href="#hero" class="active">Home<br></a></li>
           <li><a href="#about">About</a></li>
-          <!-- <li><a href="#menu">Menu</a></li>
-          <li><a href="#events">Events</a></li>-->
           <li><a href="#buku">Buku</a></li> 
           <li><a href="#gallery">Gallery</a></li>
-          <!-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li>
-          <li><a href="#contact">Contact</a></li>
-        </ul> -->
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
     <?php
     session_start(); 
+          // Periksa apakah pengguna sudah login
+      if (!isset($_SESSION['username'])) {
+        // Jika belum login, redirect ke halaman login
+        header("Location: login.php");
+        exit();
+      }
     if(isset($_SESSION['username'])) : ?>
       <div class="" style="display:flex; ">
-        <div class="btn-getstarted"><?= $_SESSION['username'] ?></div>
+        <a href="profile.php" class="btn-getstarted" style="text-decoration:none;">
+        <?= $_SESSION['username'] ?>
+        </a>
         <a href="logout.php" class="btn-getstarted">Logout</a>
       </div>
     <?php else : ?>
@@ -346,10 +333,9 @@
         <div class="col-lg-3 col-md-6">
           <h4>Follow Us</h4>
           <div class="social-links d-flex">
-            <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
-            <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
-            <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
-            <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
+            <a href="https://x.com/pasyabill" class="twitter"><i class="bi bi-twitter-x"></i></a>
+            <a href="https://www.facebook.com/dktvktdiqlfk" class="facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://www.instagram.com/aespasya/" class="instagram"><i class="bi bi-instagram"></i></a>
           </div>
         </div>
 
@@ -357,7 +343,7 @@
     </div>
 
     <div class="container copyright text-center mt-4">
-      <p>© <span>Copyright</span> <strong class="px-1 sitename">Aspasya Salsabila</strong> <span>All Rights Reserved</span></p>
+      <p>© <span>Copyright 2024</span> <strong class="px-1 sitename">Aspasya Salsabila</strong> <span>All Rights Reserved</span></p>
       
     </div>
 

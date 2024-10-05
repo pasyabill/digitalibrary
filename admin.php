@@ -47,7 +47,7 @@
           <li><a href="inputbuku.php">Input Buku</a></li>
           <li><a href="#dashboard">Dashboard</a></li>
           <!---<li><a href="#events">Events</a></li>-->
-          <li><a href="#buku">Buku</a></li> 
+          <li><a href="#buku">Hapus Buku</a></li> 
           <li><a href="#gallery">Gallery</a></li>
           <!-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -73,6 +73,12 @@
 
     <?php
     session_start(); 
+    // Periksa apakah pengguna sudah login
+if (!isset($_SESSION['username'])) {
+  // Jika belum login, redirect ke halaman login
+  header("Location: login.php");
+  exit();
+}
     if(isset($_SESSION['username'])) : ?>
       <div class="" style="display:flex; ">
         <div class="btn-getstarted"><?= $_SESSION['username'] ?></div>
@@ -232,22 +238,26 @@ $result = mysqli_query($koneksi, $query);
                 $imageFileName = $row['img'];
         ?>
                 <div class="col-6 col-md-3 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
-                            <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                        <div class="card-body p-3">
-                            <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
-                            <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
-                        </div>
-                        <div class="card-footer text-center p-2">
-                            <a href="pinjam.php?id=<?php echo $row['id_buku']; ?>" class="btn btn-danger btn-sm">Pinjam</a>
-                        </div>
-                    </div>
-                </div>
+    <div class="card h-100 shadow-sm">
+        <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
+            <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div class="card-body p-3">
+            <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
+            <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
+            <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
+            <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
+            <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
+        </div>
+        <div class="card-footer text-center p-2">
+            <form action="hapus_buku.php" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?');">
+                <input type="hidden" name="id_buku" value="<?php echo $row['id_buku']; ?>">
+                <button type="submit" class="btn btn-danger btn-sm">Hapus Buku</button>
+            </form>
+        </div>
+    </div>
+</div>
+
         <?php
             }
         } else {

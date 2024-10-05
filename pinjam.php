@@ -12,15 +12,49 @@
         <h2 class="text-center mb-4">Form Peminjaman Buku</h2>
         <form action="" method="POST">
         <?php
-        include 'koneksi.php';
+        session_start();
+        include 'koneksi.php'; // Koneksi database
+
+        // Pastikan user sudah login
+        if (!isset($_SESSION['id_user'])) {
+            header('Location: login.php');
+            exit();
+        }
+
         $id_buku = $_GET['id'] ?? null; // Menggunakan 'id' sebagai parameter
         $result = mysqli_query($koneksi, "SELECT * FROM buku WHERE id_buku = '$id_buku'");
         $row = mysqli_fetch_assoc($result);
-        
+
         // Pastikan $row tidak null
         if (!$row) {
-            echo "Buku tidak ditemukan.";
+            echo "<div class='alert alert-danger'>Buku tidak ditemukan.</div>";
             exit;
+        }
+
+        // Proses ketika form disubmit
+        if (isset($_POST['pinjam'])) {
+            $id_user = $_SESSION['id_user']; // ID user dari session
+            $username = $_POST['username'];
+            $tgl_pinjam = $_POST['tgl_pinjam'];
+            $tgl_kembali = $_POST['tgl_kembali'];
+
+            // Cek apakah buku tersedia
+            if ($row['status'] == 'tersedia') {
+                // Masukkan data peminjaman ke tabel peminjaman
+                $insertPeminjaman = "INSERT INTO peminjaman (id_user, id_buku, tanggal_peminjaman, tanggal_pengembalian, status_peminjaman) 
+                                     VALUES ('$id_user', '$id_buku', '$tgl_pinjam', '$tgl_kembali', 'menunggu')";
+                if (mysqli_query($koneksi, $insertPeminjaman)) {
+                    // Ubah status buku menjadi tidak tersedia
+                    $updateBuku = "UPDATE buku SET status = 'tidak tersedia' WHERE id_buku = '$id_buku'";
+                    mysqli_query($koneksi, $updateBuku);
+
+                    echo "<div class='alert alert-success'>Peminjaman berhasil diajukan. Menunggu persetujuan admin.</div>";
+                } else {
+                    echo "<div class='alert alert-danger'>Gagal mengajukan peminjaman. Silakan coba lagi.</div>";
+                }
+            } else {
+                echo "<div class='alert alert-danger'>Buku tidak tersedia untuk dipinjam.</div>";
+            }
         }
         ?>
        <div class="d-flex align-items-start mb-3">
@@ -78,7 +112,7 @@
                     <label for="inputTanggalKembali" class="col-sm-4 col-form-label"><strong>Tanggal Kembali:</strong></label>
                     <div class="col-sm-8">
                         <?php
-                        $n = 14;
+                        $n = 7;
                         $tgl_kembali = date('Y-m-d', strtotime('+' . $n . ' days'));
                         echo tgl_indo($tgl_kembali);
                         ?>
@@ -91,7 +125,6 @@
         </div>
         </form>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
