@@ -29,7 +29,7 @@ if (isset($_POST['submit'])) {
         // Memverifikasi password
         if (password_verify($password, $user['password'])) {
             // Simpan data pengguna ke session
-            $_SESSION['user_id'] = $user['id_user']; // Menyimpan ID pengguna
+            $_SESSION['id_user'] = $user['id_user']; // Menyimpan ID pengguna
             $_SESSION['username'] = $user['username']; // Menyimpan username
             $_SESSION['role'] = $user['role']; // Menyimpan role pengguna
 

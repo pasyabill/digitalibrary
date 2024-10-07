@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<?php error_reporting(E_ALL); 
+ini_set('display_errors', 1);  ?><!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -49,33 +50,12 @@
           <!---<li><a href="#events">Events</a></li>-->
           <li><a href="#buku">Hapus Buku</a></li> 
           <li><a href="#gallery">Gallery</a></li>
-          <!-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li>
-          <li><a href="#contact">Contact</a></li>
-        </ul> -->
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
     <?php
     session_start(); 
-    // Periksa apakah pengguna sudah login
 if (!isset($_SESSION['username'])) {
-  // Jika belum login, redirect ke halaman login
   header("Location: login.php");
   exit();
 }
@@ -119,59 +99,125 @@ if (!isset($_SESSION['username'])) {
     <!-- About Section -->
     <section id="dashboard" class="dashboard section">
     <?php
-
+// Include koneksi ke database
 include 'koneksi.php';
 
-
-// Mengambil data peminjaman dari database
+// Query untuk mendapatkan data peminjaman buku
 $query = "SELECT p.id_peminjaman, p.tanggal_peminjaman, p.tanggal_pengembalian, p.status_peminjaman, 
                  b.judul, u.username 
           FROM peminjaman p
           JOIN buku b ON p.id_buku = b.id_buku
-          JOIN user u ON p.id_user = u.id_user
-          WHERE p.status_peminjaman IN ('Pending', 'Approved')";
+          JOIN user u ON p.id_user = u.id_user";
 $result = mysqli_query($koneksi, $query);
+
+// Jika ada error pada query, tampilkan pesan kesalahan
+if (!$result) {
+    die("Error saat mengambil data peminjaman: " . mysqli_error($koneksi));
+}
 ?>
 
-      <!-- Section Title -->
-      <div class="container section-title" data-aos="fade-up">
-        <p><span>Admin</span> <span class="description-title">Dashboard</span></p>
-      </div><!-- End Section Title -->
+<!-- Section Title -->
+<div class="container section-title" data-aos="fade-up">
+    <p><span>Admin</span> <span class="description-title">Dashboard</span></p>
+</div><!-- End Section Title -->
 
-      <div class="container">
-
-      <div class="container mt-5">
-        
-        <table class="table table-bordered table-hover">
-            <thead class="table-danger">
+<div class="container mt-5">
+    <table class="table table-bordered table-hover">
+        <thead class="table-danger">
+            <tr>
+                <th>ID Peminjaman</th>
+                <th>Judul Buku</th>
+                <th>Username Peminjam</th>
+                <th>Tanggal Peminjaman</th>
+                <th>Tanggal Pengembalian</th>
+                <th>Status</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = mysqli_fetch_assoc($result)) : ?>
                 <tr>
-                    <th>ID Peminjaman</th>
-                    <th>Judul Buku</th>
-                    <th>Username Peminjam</th>
-                    <th>Tanggal Peminjaman</th>
-                    <th>Tanggal Pengembalian</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
+                    <td><?= $row['id_peminjaman'] ?></td>
+                    <td><?= $row['judul'] ?></td>
+                    <td><?= $row['username'] ?></td>
+                    <td><?= date('d-m-Y', strtotime($row['tanggal_peminjaman'])) ?></td>
+                    <td><?= !empty($row['tanggal_pengembalian']) ? date('d-m-Y', strtotime($row['tanggal_pengembalian'])) : '-' ?></td>
+                    <td><?= $row['status_peminjaman'] ?></td>
+                    <td>
+                        <?php if ($row['status_peminjaman'] == 'pending') : ?>
+                            <form method="POST" action="admin.php" style="display:inline;">
+                                <input type="hidden" name="id_peminjaman" value="<?= $row['id_peminjaman'] ?>">
+                                <button type="submit" name="action" value="approve" class="btn btn-warning btn-sm">Terima</button>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Tolak</button>
+                            </form>
+                        <?php elseif ($row['status_peminjaman'] == 'approved') : ?>
+                            <form method="POST" action="admin.php" style="display:inline;">
+                                <input type="hidden" name="id_peminjaman" value="<?= $row['id_peminjaman'] ?>">
+                                <button type="submit" name="action" value="return" class="btn btn-warning btn-sm">Pengembalian</button>
+                            </form>
+                        <?php endif; ?>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = mysqli_fetch_assoc($result)) : ?>
-                    <tr>
-                        <td><?= $row['id_peminjaman'] ?></td>
-                        <td><?= $row['judul'] ?></td>
-                        <td><?= $row['username'] ?></td>
-                        <td><?= date('d-m-Y', strtotime($row['tanggal_peminjaman'])) ?></td>
-                        <td><?= date('d-m-Y', strtotime($row['tanggal_pengembalian'])) ?></td>
-                        <td><?= $row['status_peminjaman'] ?></td>
-                        <td>
-                            <?php if ($row['status_peminjaman'] == 'Pending') : ?>
-                                <a href="acc_pinjaman.php?id_peminjaman=<?= $row['id_peminjaman'] ?>" class="btn btn-success btn-sm">ACC</a>
-                            <?php elseif ($row['status_peminjaman'] == 'Approved') : ?>
-                                <a href="return_book.php?id_peminjaman=<?= $row['id_peminjaman'] ?>" class="btn btn-warning btn-sm">Tolak</a>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
+            <?php endwhile; ?>
+        </tbody>
+    </table>
+</div>
+
+<?php
+// Proses aksi persetujuan, penolakan, atau pengembalian buku
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Ambil ID peminjaman dan aksi dari POST
+    $id_peminjaman = $_POST['id_peminjaman'];
+    $action = $_POST['action'];
+
+    // Proses berdasarkan aksi yang diambil
+    if ($action == 'approve') {
+        // Update status peminjaman menjadi approved
+        $query = "UPDATE peminjaman SET status_peminjaman = 'approved' WHERE id_peminjaman = $id_peminjaman";
+        mysqli_query($koneksi, $query);
+
+        // Ambil path PDF dari buku
+        $get_buku_query = "SELECT b.pdf_path FROM peminjaman p 
+                           JOIN buku b ON p.id_buku = b.id_buku 
+                           WHERE p.id_peminjaman = $id_peminjaman";
+        $result_buku = mysqli_query($koneksi, $get_buku_query);
+
+        // Jika buku ditemukan, update akses PDF
+        if ($result_buku && mysqli_num_rows($result_buku) > 0) {
+            $buku = mysqli_fetch_assoc($result_buku);
+            $pdf_path = $buku['pdf_path'];
+
+            // Simpan informasi akses PDF ke dalam tabel peminjaman
+            $update_access_query = "UPDATE peminjaman SET pdf_access = '$pdf_path' WHERE id_peminjaman = $id_peminjaman";
+            mysqli_query($koneksi, $update_access_query);
+        } else {
+            echo "Gagal mendapatkan informasi buku: " . mysqli_error($koneksi);
+        }
+
+    } elseif ($action == 'reject') {
+        // Update status peminjaman menjadi rejected
+        $query = "UPDATE peminjaman SET status_peminjaman = 'rejected' WHERE id_peminjaman = $id_peminjaman";
+        mysqli_query($koneksi, $query);
+
+    } elseif ($action == 'return') {
+        // Update status peminjaman menjadi returned dan set tanggal pengembalian
+        $query = "UPDATE peminjaman SET status_peminjaman = 'returned', tanggal_pengembalian = NOW() WHERE id_peminjaman = $id_peminjaman";
+        mysqli_query($koneksi, $query);
+    }
+
+    // Jika query berhasil dijalankan, tampilkan pesan sukses dan refresh halaman
+    if (mysqli_query($koneksi, $query)) {
+        echo "Status peminjaman berhasil diperbarui.";
+        // Refresh halaman untuk memperbarui tabel
+        echo "<meta http-equiv='refresh' content='0'>";
+    } else {
+        echo "Terjadi kesalahan saat memperbarui status peminjaman: " . mysqli_error($koneksi);
+    }
+}
+?>
+
+     
+
             </tbody>
         </table>
     </div>

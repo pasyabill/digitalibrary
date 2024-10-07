@@ -42,7 +42,7 @@
             if ($row['status'] == 'tersedia') {
                 // Masukkan data peminjaman ke tabel peminjaman
                 $insertPeminjaman = "INSERT INTO peminjaman (id_user, id_buku, tanggal_peminjaman, tanggal_pengembalian, status_peminjaman) 
-                                     VALUES ('$id_user', '$id_buku', '$tgl_pinjam', '$tgl_kembali', 'menunggu')";
+                                     VALUES ('$id_user', '$id_buku', '$tgl_pinjam', '$tgl_kembali', 'pending')";
                 if (mysqli_query($koneksi, $insertPeminjaman)) {
                     // Ubah status buku menjadi tidak tersedia
                     $updateBuku = "UPDATE buku SET status = 'tidak tersedia' WHERE id_buku = '$id_buku'";
