@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -26,6 +27,9 @@
 
   <!-- Main CSS File -->
   <link href="assets/css/main.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+
 
 </head>
 
@@ -52,9 +56,13 @@
 
     <?php
     session_start(); 
-          // Periksa apakah pengguna sudah login
+
+    if (isset($_SESSION['success_message'])) {
+      echo "<div class='alert alert-success'>".$_SESSION['success_message']."</div>";
+      unset($_SESSION['success_message']);
+  }
+          
       if (!isset($_SESSION['username'])) {
-        // Jika belum login, redirect ke halaman login
         header("Location: login.php");
         exit();
       }
@@ -68,6 +76,7 @@
     <?php else : ?>
         <a class="btn-getstarted" href="login.php">Login</a>
      <?php endif; ?>
+     
 
 
    
@@ -86,7 +95,7 @@
             <p data-aos="fade-up" data-aos-delay="100">Selamat Datang di Perpustakaan Digital.</p>
             <div class="d-flex" data-aos="fade-up" data-aos-delay="200">
               <a href="#buku" class="btn-get-started">Daftar Buku</a>
-              <a href="https://youtu.be/BDDz1TnumNw?si=rxIJ7g3BdI1TOvD5" class="glightbox btn-watch-video d-flex align-items-center"><i class="bi bi-play-circle"></i><span>Watch Video</span></a>
+              <a href="profile.php" class="btn-get-started glightbox"><i class="bi bi-person"></i> Profil</a>
             </div>
           </div>
           <div class="col-lg-5 order-1 order-lg-2 hero-img" data-aos="zoom-out">
@@ -173,54 +182,103 @@
 </div>
 <div class="container mt-5">
     <div class="row">
-        <?php
-        include 'koneksi.php';
+    <div class="container mt-5">
+    <div class="row">
+    <?php
+include 'koneksi.php';
 
-        // Ambil parameter pencarian dan kategori jika ada
-        $search = isset($_GET['search']) ? $_GET['search'] : '';
-        $kategori = isset($_GET['kategori']) ? $_GET['kategori'] : '';
-        $query = "SELECT * FROM buku";
+// Ambil parameter pencarian dan kategori jika ada
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$kategori = isset($_GET['kategori']) ? $_GET['kategori'] : '';
+$query = "SELECT * FROM buku";
 
-        // Jika ada pencarian, tambahkan kondisi WHERE
-        if ($search) {
-            $query .= " WHERE judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
-        }
+// Jika ada pencarian, tambahkan kondisi WHERE
+if ($search) {
+    $query .= " WHERE judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
+}
 
-        // Jika ada kategori yang dipilih, tambahkan kondisi WHERE
-        if ($kategori) {
-            $query .= $search ? " AND kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" : " WHERE kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
-        }
+// Jika ada kategori yang dipilih, tambahkan kondisi WHERE
+if ($kategori) {
+    $query .= $search ? " AND kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" : " WHERE kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
+}
 
-        $result = mysqli_query($koneksi, $query);
+$result = mysqli_query($koneksi, $query);
 
-        // Cek apakah hasil query ada
-        if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $imageFileName = $row['img'];
+// Cek apakah hasil query ada
+if (mysqli_num_rows($result) > 0) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $imageFileName = $row['img'];
+
+        // Ambil ulasan berdasarkan id_buku
+        $id_buku = $row['id_buku'];
+        $ulasan_query = "SELECT * FROM ulasanbuku WHERE id_buku = '$id_buku'";
+        $ulasan_result = mysqli_query($koneksi, $ulasan_query);
+        $ulasan_count = mysqli_num_rows($ulasan_result);
         ?>
-                <div class="col-6 col-md-3 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
-                            <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
-                        </div>
-                        <div class="card-body p-3">
-                            <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
-                            <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
-                            <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
-                        </div>
-                        <div class="card-footer text-center p-2">
-                            <a href="pinjam.php?id=<?php echo $row['id_buku']; ?>" class="btn btn-danger btn-sm">Pinjam</a>
-                        </div>
+        <div class="col-6 col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
+                    <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <div class="card-body p-3">
+                    <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
+                    <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
+                    <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
+                    <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
+                    <p class="card-text text-center mb-1"><strong>Status:</strong> <?php echo $row['status']; ?></p>
+                    <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
+                </div>
+                <div class="card-footer text-center p-2">
+                    <a href="pinjam.php?id=<?php echo $row['id_buku']; ?>" class="btn btn-danger btn-sm">Pinjam</a>
+                    <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#modalUlasan-<?php echo $id_buku; ?>">
+                        Lihat Ulasan (<?php echo $ulasan_count; ?>)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal untuk menampilkan ulasan -->
+        <div class="modal fade" id="modalUlasan-<?php echo $id_buku; ?>" tabindex="-1" aria-labelledby="modalUlasanLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalUlasanLabel">Ulasan untuk <?php echo $row['judul']; ?></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <?php
+                        if ($ulasan_count > 0) {
+                            // Loop untuk menampilkan ulasan
+                            while ($ulasan_row = mysqli_fetch_assoc($ulasan_result)) {
+                                // Pastikan kunci "username" ada sebelum mencoba menampilkannya
+                                $username = isset($ulasan_row['username']) ? $ulasan_row['username'] : 'Anonim';
+                                echo '<div class="mb-3">';
+                                echo '<strong>' . $username . ':</strong>';
+                                echo '<p>' . $ulasan_row['ulasan'] . '</p>';
+                                echo '<p><strong>Rating:</strong> ' . str_repeat('★', $ulasan_row['rating']) . str_repeat('☆', 5 - $ulasan_row['rating']) . '</p>';
+                                echo '</div>';
+                            }
+                        } else {
+                            echo '<p>Tidak ada ulasan untuk buku ini.</p>';
+                        }
+                        ?>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                     </div>
                 </div>
+            </div>
+        </div>
         <?php
-            }
-        } else {
-            echo '<p class="text-center">Tidak ada buku yang ditemukan.</p>';
-        }
-        ?>
+    }
+} else {
+    echo '<p class="text-center">Tidak ada buku yang ditemukan.</p>';
+}
+?>
+
+    </div>
+</div>
+
     </div>
 </div>
 

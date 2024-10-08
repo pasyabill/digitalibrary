@@ -104,7 +104,7 @@ include 'koneksi.php';
 
 // Query untuk mendapatkan data peminjaman buku
 $query = "SELECT p.id_peminjaman, p.tanggal_peminjaman, p.tanggal_pengembalian, p.status_peminjaman, 
-                 b.judul, u.username 
+                 b.judul, u.username, p.id_buku, u.id_user
           FROM peminjaman p
           JOIN buku b ON p.id_buku = b.id_buku
           JOIN user u ON p.id_user = u.id_user";
@@ -118,8 +118,8 @@ if (!$result) {
 
 <!-- Section Title -->
 <div class="container section-title" data-aos="fade-up">
-    <p><span>Admin</span> <span class="description-title">Dashboard</span></p>
-</div><!-- End Section Title -->
+    <p><span>Dashboard</span> <span class="description-title">Aksi</span></p>
+</div>
 
 <div class="container mt-5">
     <table class="table table-bordered table-hover">
@@ -147,6 +147,8 @@ if (!$result) {
                         <?php if ($row['status_peminjaman'] == 'pending') : ?>
                             <form method="POST" action="admin.php" style="display:inline;">
                                 <input type="hidden" name="id_peminjaman" value="<?= $row['id_peminjaman'] ?>">
+                                <input type="hidden" name="id_buku" value="<?= $row['id_buku'] ?>">
+                                <input type="hidden" name="id_user" value="<?= $row['id_user'] ?>">
                                 <button type="submit" name="action" value="approve" class="btn btn-warning btn-sm">Terima</button>
                                 <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Tolak</button>
                             </form>
@@ -155,6 +157,8 @@ if (!$result) {
                                 <input type="hidden" name="id_peminjaman" value="<?= $row['id_peminjaman'] ?>">
                                 <button type="submit" name="action" value="return" class="btn btn-warning btn-sm">Pengembalian</button>
                             </form>
+                        <?php elseif ($row['status_peminjaman'] == 'returned') : ?>
+                            <span class="text-success">Buku Sudah Dikembalikan</span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -168,6 +172,8 @@ if (!$result) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Ambil ID peminjaman dan aksi dari POST
     $id_peminjaman = $_POST['id_peminjaman'];
+    $id_buku = $_POST['id_buku']; // Tambahkan id_buku
+    $id_user = $_POST['id_user']; // Tambahkan id_user
     $action = $_POST['action'];
 
     // Proses berdasarkan aksi yang diambil
@@ -176,23 +182,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $query = "UPDATE peminjaman SET status_peminjaman = 'approved' WHERE id_peminjaman = $id_peminjaman";
         mysqli_query($koneksi, $query);
 
-        // Ambil path PDF dari buku
-        $get_buku_query = "SELECT b.pdf_path FROM peminjaman p 
-                           JOIN buku b ON p.id_buku = b.id_buku 
-                           WHERE p.id_peminjaman = $id_peminjaman";
-        $result_buku = mysqli_query($koneksi, $get_buku_query);
+        // Update status buku menjadi 'kosong'
+        $query2 = "UPDATE buku 
+                    SET status = 'kosong' 
+                    WHERE id_buku = $id_buku";
+        mysqli_query($koneksi, $query2);
 
-        // Jika buku ditemukan, update akses PDF
-        if ($result_buku && mysqli_num_rows($result_buku) > 0) {
-            $buku = mysqli_fetch_assoc($result_buku);
-            $pdf_path = $buku['pdf_path'];
-
-            // Simpan informasi akses PDF ke dalam tabel peminjaman
-            $update_access_query = "UPDATE peminjaman SET pdf_access = '$pdf_path' WHERE id_peminjaman = $id_peminjaman";
-            mysqli_query($koneksi, $update_access_query);
-        } else {
-            echo "Gagal mendapatkan informasi buku: " . mysqli_error($koneksi);
-        }
+        // Tambahkan buku ke koleksi pribadi user
+        $koleksiQuery = "INSERT INTO koleksipribadi (id_user, id_buku) VALUES ($id_user, $id_buku)";
+        mysqli_query($koneksi, $koleksiQuery);
 
     } elseif ($action == 'reject') {
         // Update status peminjaman menjadi rejected
@@ -202,25 +200,141 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif ($action == 'return') {
         // Update status peminjaman menjadi returned dan set tanggal pengembalian
         $query = "UPDATE peminjaman SET status_peminjaman = 'returned', tanggal_pengembalian = NOW() WHERE id_peminjaman = $id_peminjaman";
-        mysqli_query($koneksi, $query);
+        
+        // Pastikan query peminjaman berhasil
+        if (mysqli_query($koneksi, $query)) {
+            // Ambil ID buku dari peminjaman yang dikembalikan
+            $query_buku = "SELECT id_buku FROM peminjaman WHERE id_peminjaman = $id_peminjaman";
+            $result_buku = mysqli_query($koneksi, $query_buku);
+            
+            if ($result_buku && mysqli_num_rows($result_buku) > 0) {
+                $buku = mysqli_fetch_assoc($result_buku);
+                $id_buku = $buku['id_buku'];
+                
+                // Update status buku menjadi tersedia
+                $query2 = "UPDATE buku SET status = 'tersedia' WHERE id_buku = $id_buku";
+                if (mysqli_query($koneksi, $query2)) {
+                    echo "<div class='alert alert-success'>Buku berhasil dikembalikan dan status diperbarui menjadi tersedia.</div>";
+                } else {
+                    echo "Gagal memperbarui status buku: " . mysqli_error($koneksi);
+                }
+            } else {
+                echo "Gagal mengambil ID buku dari peminjaman: " . mysqli_error($koneksi);
+            }
+        } else {
+            echo "Gagal memperbarui status peminjaman: " . mysqli_error($koneksi);
+        }
     }
 
-    // Jika query berhasil dijalankan, tampilkan pesan sukses dan refresh halaman
-    if (mysqli_query($koneksi, $query)) {
-        echo "Status peminjaman berhasil diperbarui.";
-        // Refresh halaman untuk memperbarui tabel
-        echo "<meta http-equiv='refresh' content='0'>";
-    } else {
-        echo "Terjadi kesalahan saat memperbarui status peminjaman: " . mysqli_error($koneksi);
-    }
+    // Refresh halaman untuk memperbarui tabel
+    echo "<meta http-equiv='refresh' content='0'>";
 }
 ?>
 
-     
 
-            </tbody>
-        </table>
-    </div>
+<?php
+$query = "SELECT ul.id_ulasan, ul.id_user, ul.id_buku, ul.ulasan, ul.rating, u.username 
+          FROM ulasanbuku ul 
+          JOIN user u ON ul.id_user = u.id_user"; // Ganti dengan nama kolom yang sesuai
+$result = mysqli_query($koneksi, $query);
+?>
+
+<div class="container section-title" data-aos="fade-up">
+    <p><span>Daftar</span> <span class="description-title">Ulasan</span></p>
+</div>
+<div class="container mt-5">
+    <table class="table table-bordered table-hover">
+        <thead class="table-danger">
+            <tr>
+                <th>ID Ulasan</th>
+                <th>ID User</th>
+                <th>Username</th>
+                <th>ID Buku</th>
+                <th>Ulasan</th>
+                <th>Rating</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Cek apakah ada data
+            if (mysqli_num_rows($result) > 0) {
+                // Iterasi melalui setiap baris hasil
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>
+                            <td>{$row['id_ulasan']}</td>
+                            <td>{$row['id_user']}</td>
+                            <td>{$row['username']}</td>
+                            <td>{$row['id_buku']}</td>
+                            <td>{$row['ulasan']}</td>
+                            <td>{$row['rating']}</td>
+                            <td>
+                                <a href='hapus_ulasan.php?id_ulasan={$row['id_ulasan']}' class='btn btn-danger' onclick='return confirm(\"Apakah Anda yakin ingin menghapus ulasan ini?\");'>Hapus</a>
+                            </td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='7' class='text-center'>Tidak ada ulasan yang ditemukan.</td></tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
+
+<?php
+// Sertakan koneksi database
+include 'koneksi.php'; // Pastikan untuk mengganti dengan file koneksi Anda
+
+$query = "SELECT id_user, username, role FROM user"; // Query untuk mengambil data dari tabel user
+$result = mysqli_query($koneksi, $query);
+?>
+
+<div class="container section-title" data-aos="fade-up">
+    <p><span>Daftar</span> <span class="description-title">Pengguna</span></p>
+</div>
+<div class="container mt-5">
+    <table class="table table-bordered table-hover">
+        <thead class="table-danger">
+            <tr>
+                <th>ID User</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Cek apakah ada data
+            if (mysqli_num_rows($result) > 0) {
+                // Iterasi melalui setiap baris hasil
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>
+                            <td>{$row['id_user']}</td>
+                            <td>{$row['username']}</td>
+                            <td>{$row['role']}</td>
+                            <td>
+                                <a href='edit_user.php?id_user={$row['id_user']}' class='btn btn-warning'>Edit</a>
+                                <a href='hapus_user.php?id_user={$row['id_user']}' class='btn btn-danger' onclick='return confirm(\"Apakah Anda yakin ingin menghapus pengguna ini?\");'>Hapus</a>
+                            </td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='4' class='text-center'>Tidak ada pengguna yang ditemukan.</td></tr>";
+            }
+            ?>
+        </tbody>
+    </table>
+</div>
+
+<?php
+// Menutup koneksi
+mysqli_close($koneksi);
+?>
+
+    </table>
+</div>
+
+            
 
       </div>
     </section>
@@ -293,6 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
             <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
             <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
+            <p class="card-text text-center mb-1"><strong>Status:</strong> <?php echo $row['status']; ?></p>
             <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
         </div>
         <div class="card-footer text-center p-2">

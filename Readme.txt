@@ -5,6 +5,6 @@ Template URL: https://bootstrapmade.com/yummy-bootstrap-restaurant-website-templ
 Author: BootstrapMade.com
 License: https://bootstrapmade.com/license/
 
-Latihan UK kompetensi keahlian RPL/PPLG Aspasya Salsabila SMK N 2 Magelang
+Latihan UK kompetensi keahlian RPL/PPLG Aspasya Salsabila 04/XII PPLG  1 SMK N 2 Magelang 2024/2025 
 ig : @aespasya 
-bro knp kmu masuk rpl bro?
+knp kmu masuk rpl bro?

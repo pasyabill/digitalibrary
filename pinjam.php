@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="assets/img/logo/logobuku.jpg" rel="icon">
     <title>Pinjam Buku</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -37,7 +39,7 @@
             $username = $_POST['username'];
             $tgl_pinjam = $_POST['tgl_pinjam'];
             $tgl_kembali = $_POST['tgl_kembali'];
-
+        
             // Cek apakah buku tersedia
             if ($row['status'] == 'tersedia') {
                 // Masukkan data peminjaman ke tabel peminjaman
@@ -45,17 +47,30 @@
                                      VALUES ('$id_user', '$id_buku', '$tgl_pinjam', '$tgl_kembali', 'pending')";
                 if (mysqli_query($koneksi, $insertPeminjaman)) {
                     // Ubah status buku menjadi tidak tersedia
-                    $updateBuku = "UPDATE buku SET status = 'tidak tersedia' WHERE id_buku = '$id_buku'";
+                    $updateBuku = "UPDATE buku SET status = 'kosong' WHERE id_buku = '$id_buku'";
                     mysqli_query($koneksi, $updateBuku);
-
-                    echo "<div class='alert alert-success'>Peminjaman berhasil diajukan. Menunggu persetujuan admin.</div>";
+        
+                    echo "<script>
+                            swal('Success!', 'Peminjaman berhasil diajukan. Menunggu persetujuan admin. Cek Halaman Profil secara Berkala', 'success').then(function() {
+                                window.location = 'index.php'; // Arahkan ke halaman yang diinginkan
+                            });
+                          </script>";
                 } else {
-                    echo "<div class='alert alert-danger'>Gagal mengajukan peminjaman. Silakan coba lagi.</div>";
+                    echo "<script>
+                            swal('Error!', 'Gagal mengajukan peminjaman. Silakan coba lagi.', 'error').then(function() {
+                                window.location = 'index.php'; // Arahkan ke halaman yang diinginkan
+                            });
+                          </script>";
                 }
             } else {
-                echo "<div class='alert alert-danger'>Buku tidak tersedia untuk dipinjam.</div>";
+                echo "<script>
+                        swal('Error!', 'Buku tidak tersedia untuk dipinjam.', 'error').then(function() {
+                            window.location = 'index.php'; // Arahkan ke halaman yang diinginkan
+                        });
+                      </script>";
             }
         }
+        
         ?>
        <div class="d-flex align-items-start mb-3">
             <div class="me-4" style="flex: 1;">
@@ -74,9 +89,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="setting-input-2" class="form-label"><strong>Username:</strong></label>
-                    <input type="text" class="form-control" id="setting-input-2" name="username" required>
+                <label for="setting-input-2" class="form-label"><strong>Username:</strong></label>
+                <input type="text" class="form-control" id="setting-input-2" name="username" required value="<?= $_SESSION['username'] ?>" readonly>
                 </div>
+
 
                 <div class="row mb-3">
                     <label for="inputTanggalPinjam" class="col-sm-4 col-form-label"><strong>Tanggal Pinjam:</strong></label>
