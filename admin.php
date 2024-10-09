@@ -1,5 +1,6 @@
 <?php error_reporting(E_ALL); 
-ini_set('display_errors', 1);  ?><!DOCTYPE html>
+ini_set('display_errors', 1);  ?>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -36,8 +37,6 @@ ini_set('display_errors', 1);  ?><!DOCTYPE html>
     <div class="container position-relative d-flex align-items-center justify-content-between">
 
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
         <h1 class="sitename">Admin Digital Library</h1>
         <span>.</span>
       </a>
@@ -47,7 +46,6 @@ ini_set('display_errors', 1);  ?><!DOCTYPE html>
           <li><a href="#hero" class="active">Home<br></a></li>
           <li><a href="inputbuku.php">Input Buku</a></li>
           <li><a href="#dashboard">Dashboard</a></li>
-          <!---<li><a href="#events">Events</a></li>-->
           <li><a href="#buku">Hapus Buku</a></li> 
           <li><a href="#gallery">Gallery</a></li>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
@@ -75,7 +73,6 @@ if (!isset($_SESSION['username'])) {
 
   <main class="main">
 
-    <!-- Hero Section -->
     <section id="hero" class="hero section light-background">
 
       <div class="container">
@@ -94,26 +91,52 @@ if (!isset($_SESSION['username'])) {
         </div>
       </div>
 
-    </section><!-- /Hero Section -->
+    </section>
 
-    <!-- About Section -->
     <section id="dashboard" class="dashboard section">
     <?php
-// Include koneksi ke database
-include 'koneksi.php';
+    ob_start(); // Menambahkan output buffering di awal
 
-// Query untuk mendapatkan data peminjaman buku
-$query = "SELECT p.id_peminjaman, p.tanggal_peminjaman, p.tanggal_pengembalian, p.status_peminjaman, 
-                 b.judul, u.username, p.id_buku, u.id_user
-          FROM peminjaman p
-          JOIN buku b ON p.id_buku = b.id_buku
-          JOIN user u ON p.id_user = u.id_user";
-$result = mysqli_query($koneksi, $query);
+    include 'koneksi.php';
 
-// Jika ada error pada query, tampilkan pesan kesalahan
-if (!$result) {
-    die("Error saat mengambil data peminjaman: " . mysqli_error($koneksi));
-}
+    // Query untuk mengambil data peminjaman
+    $query = "SELECT p.id_peminjaman, p.tanggal_peminjaman, p.tanggal_pengembalian, p.status_peminjaman, 
+                     b.judul, u.username, p.id_buku, u.id_user
+              FROM peminjaman p
+              JOIN buku b ON p.id_buku = b.id_buku
+              JOIN user u ON p.id_user = u.id_user";
+    $result = mysqli_query($koneksi, $query);
+    if (!$result) {
+        die("Error saat mengambil data peminjaman: " . mysqli_error($koneksi));
+    }
+
+    // Tambahkan logika untuk mengecek apakah tanggal sekarang sudah melewati atau sama dengan tanggal pengembalian
+    while ($row = mysqli_fetch_assoc($result)) {
+        $current_date = date('Y-m-d'); // Ambil tanggal hari ini
+        $tanggal_pengembalian = $row['tanggal_pengembalian'];
+
+        // Jika status peminjaman belum 'returned' dan tanggal pengembalian tercatat
+        if ($row['status_peminjaman'] != 'returned' && !empty($tanggal_pengembalian)) {
+            if ($current_date >= $tanggal_pengembalian) {
+                // Update status peminjaman menjadi 'returned' jika sudah mencapai atau melewati tanggal pengembalian
+                $id_peminjaman = $row['id_peminjaman'];
+                $query_update_status = "UPDATE peminjaman 
+                                        SET status_peminjaman = 'returned', 
+                                            tanggal_pengembalian = NOW() 
+                                        WHERE id_peminjaman = $id_peminjaman";
+                mysqli_query($koneksi, $query_update_status);
+
+                // Ambil ID buku dari peminjaman yang dikembalikan
+                $id_buku = $row['id_buku'];
+                // Update status buku menjadi 'tersedia'
+                $query_update_buku = "UPDATE buku SET status = 'tersedia' WHERE id_buku = $id_buku";
+                mysqli_query($koneksi, $query_update_buku);
+            }
+        }
+    }
+
+    // Reset pointer result agar bisa digunakan kembali untuk ditampilkan dalam tabel
+    mysqli_data_seek($result, 0);
 ?>
 
 <!-- Section Title -->
@@ -171,71 +194,65 @@ if (!$result) {
 // Proses aksi persetujuan, penolakan, atau pengembalian buku
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Ambil ID peminjaman dan aksi dari POST
-    $id_peminjaman = $_POST['id_peminjaman'];
-    $id_buku = $_POST['id_buku']; // Tambahkan id_buku
-    $id_user = $_POST['id_user']; // Tambahkan id_user
-    $action = $_POST['action'];
+    $id_peminjaman = isset($_POST['id_peminjaman']) ? $_POST['id_peminjaman'] : null;
+    $id_buku = isset($_POST['id_buku']) ? $_POST['id_buku'] : null; // Tambahkan id_buku
+    $id_user = isset($_POST['id_user']) ? $_POST['id_user'] : null; // Tambahkan id_user
+    $action = isset($_POST['action']) ? $_POST['action'] : null;
 
-    // Proses berdasarkan aksi yang diambil
-    if ($action == 'approve') {
-        // Update status peminjaman menjadi approved
-        $query = "UPDATE peminjaman SET status_peminjaman = 'approved' WHERE id_peminjaman = $id_peminjaman";
-        mysqli_query($koneksi, $query);
+    if ($id_peminjaman && $action) {
+        // Proses berdasarkan aksi yang diambil
+        if ($action == 'approve') {
+            // Update status peminjaman menjadi approved
+            $query = "UPDATE peminjaman SET status_peminjaman = 'approved' WHERE id_peminjaman = $id_peminjaman";
+            mysqli_query($koneksi, $query);
 
-        // Update status buku menjadi 'kosong'
-        $query2 = "UPDATE buku 
-                    SET status = 'kosong' 
-                    WHERE id_buku = $id_buku";
-        mysqli_query($koneksi, $query2);
+            // Update status buku menjadi 'kosong'
+            $query2 = "UPDATE buku SET status = 'kosong' WHERE id_buku = $id_buku";
+            mysqli_query($koneksi, $query2);
 
-        // Tambahkan buku ke koleksi pribadi user
-        $koleksiQuery = "INSERT INTO koleksipribadi (id_user, id_buku) VALUES ($id_user, $id_buku)";
-        mysqli_query($koneksi, $koleksiQuery);
+            // Tambahkan buku ke koleksi pribadi user
+            $koleksiQuery = "INSERT INTO koleksipribadi (id_user, id_buku) VALUES ($id_user, $id_buku)";
+            mysqli_query($koneksi, $koleksiQuery);
 
-    } elseif ($action == 'reject') {
-        // Update status peminjaman menjadi rejected
-        $query = "UPDATE peminjaman SET status_peminjaman = 'rejected' WHERE id_peminjaman = $id_peminjaman";
-        mysqli_query($koneksi, $query);
+        } elseif ($action == 'reject') {
+            // Update status peminjaman menjadi rejected
+            $query = "UPDATE peminjaman SET status_peminjaman = 'rejected' WHERE id_peminjaman = $id_peminjaman";
+            mysqli_query($koneksi, $query);
 
-    } elseif ($action == 'return') {
-        // Update status peminjaman menjadi returned dan set tanggal pengembalian
-        $query = "UPDATE peminjaman SET status_peminjaman = 'returned', tanggal_pengembalian = NOW() WHERE id_peminjaman = $id_peminjaman";
-        
-        // Pastikan query peminjaman berhasil
-        if (mysqli_query($koneksi, $query)) {
-            // Ambil ID buku dari peminjaman yang dikembalikan
-            $query_buku = "SELECT id_buku FROM peminjaman WHERE id_peminjaman = $id_peminjaman";
-            $result_buku = mysqli_query($koneksi, $query_buku);
+        } elseif ($action == 'return') {
+            // Update status peminjaman menjadi returned dan set tanggal pengembalian
+            $query = "UPDATE peminjaman SET status_peminjaman = 'returned', tanggal_pengembalian = NOW() WHERE id_peminjaman = $id_peminjaman";
             
-            if ($result_buku && mysqli_num_rows($result_buku) > 0) {
-                $buku = mysqli_fetch_assoc($result_buku);
-                $id_buku = $buku['id_buku'];
-                
-                // Update status buku menjadi tersedia
-                $query2 = "UPDATE buku SET status = 'tersedia' WHERE id_buku = $id_buku";
-                if (mysqli_query($koneksi, $query2)) {
-                    echo "<div class='alert alert-success'>Buku berhasil dikembalikan dan status diperbarui menjadi tersedia.</div>";
-                } else {
-                    echo "Gagal memperbarui status buku: " . mysqli_error($koneksi);
-                }
-            } else {
-                echo "Gagal mengambil ID buku dari peminjaman: " . mysqli_error($koneksi);
-            }
-        } else {
-            echo "Gagal memperbarui status peminjaman: " . mysqli_error($koneksi);
-        }
-    }
+            // Pastikan query peminjaman berhasil
+            if (mysqli_query($koneksi, $query)) {
+                // Ambil ID buku dari peminjaman yang dikembalikan
+                $query_buku = "SELECT id_buku FROM peminjaman WHERE id_peminjaman = $id_peminjaman";
+                $result_buku = mysqli_query($koneksi, $query_buku);
+                $row_buku = mysqli_fetch_assoc($result_buku);
+                $id_buku = $row_buku['id_buku'];
 
-    // Refresh halaman untuk memperbarui tabel
-    echo "<meta http-equiv='refresh' content='0'>";
+                // Update status buku menjadi 'tersedia'
+                $query_update_buku = "UPDATE buku SET status = 'tersedia' WHERE id_buku = $id_buku";
+                mysqli_query($koneksi, $query_update_buku);
+            }
+        }
+
+        // Redirect untuk menghindari double submission
+        header('Location: admin.php');
+        exit();
+    }
 }
+
+// Flush output buffer dan kirim ke browser
+ob_end_flush();
 ?>
 
 
 <?php
-$query = "SELECT ul.id_ulasan, ul.id_user, ul.id_buku, ul.ulasan, ul.rating, u.username 
+$query = "SELECT ul.id_ulasan, u.username, b.judul, ul.ulasan, ul.rating 
           FROM ulasanbuku ul 
-          JOIN user u ON ul.id_user = u.id_user"; // Ganti dengan nama kolom yang sesuai
+          JOIN user u ON ul.id_user = u.id_user 
+          JOIN buku b ON ul.id_buku = b.id_buku"; // Gabungkan tabel buku untuk mendapatkan judul buku
 $result = mysqli_query($koneksi, $query);
 ?>
 
@@ -247,9 +264,8 @@ $result = mysqli_query($koneksi, $query);
         <thead class="table-danger">
             <tr>
                 <th>ID Ulasan</th>
-                <th>ID User</th>
                 <th>Username</th>
-                <th>ID Buku</th>
+                <th>Judul Buku</th>
                 <th>Ulasan</th>
                 <th>Rating</th>
                 <th>Aksi</th>
@@ -263,9 +279,8 @@ $result = mysqli_query($koneksi, $query);
                 while ($row = mysqli_fetch_assoc($result)) {
                     echo "<tr>
                             <td>{$row['id_ulasan']}</td>
-                            <td>{$row['id_user']}</td>
                             <td>{$row['username']}</td>
-                            <td>{$row['id_buku']}</td>
+                            <td>{$row['judul']}</td>
                             <td>{$row['ulasan']}</td>
                             <td>{$row['rating']}</td>
                             <td>
@@ -274,18 +289,18 @@ $result = mysqli_query($koneksi, $query);
                           </tr>";
                 }
             } else {
-                echo "<tr><td colspan='7' class='text-center'>Tidak ada ulasan yang ditemukan.</td></tr>";
+                echo "<tr><td colspan='6' class='text-center'>Tidak ada ulasan yang ditemukan.</td></tr>";
             }
             ?>
         </tbody>
     </table>
 </div>
 
-<?php
-// Sertakan koneksi database
-include 'koneksi.php'; // Pastikan untuk mengganti dengan file koneksi Anda
 
-$query = "SELECT id_user, username, role FROM user"; // Query untuk mengambil data dari tabel user
+<?php
+include 'koneksi.php';
+
+$query = "SELECT id_user, username, role FROM user"; 
 $result = mysqli_query($koneksi, $query);
 ?>
 
@@ -304,9 +319,7 @@ $result = mysqli_query($koneksi, $query);
         </thead>
         <tbody>
             <?php
-            // Cek apakah ada data
             if (mysqli_num_rows($result) > 0) {
-                // Iterasi melalui setiap baris hasil
                 while ($row = mysqli_fetch_assoc($result)) {
                     echo "<tr>
                             <td>{$row['id_user']}</td>
@@ -327,7 +340,6 @@ $result = mysqli_query($koneksi, $query);
 </div>
 
 <?php
-// Menutup koneksi
 mysqli_close($koneksi);
 ?>
 
