@@ -52,15 +52,17 @@
         
                     echo "<script>
                             swal('Success!', 'Peminjaman berhasil diajukan. Menunggu persetujuan admin. Cek Halaman Profil secara Berkala', 'success').then(function() {
-                                window.location = 'index.php'; // Arahkan ke halaman yang diinginkan
+                                window.location.href = 'index.php'; // Arahkan ke halaman yang diinginkan
                             });
                           </script>";
                 } else {
                     echo "<script>
-                            swal('Error!', 'Gagal mengajukan peminjaman. Silakan coba lagi.', 'error').then(function() {
-                                window.location = 'index.php'; // Arahkan ke halaman yang diinginkan
-                            });
-                          </script>";
+                    swal('Success!', 'Peminjaman berhasil diajukan. Menunggu persetujuan admin. Cek Halaman Profil secara Berkala', 'success').then(function() {
+                        console.log('Redirecting to index.php'); 
+                        window.location = 'index.php'; 
+                    });
+                </script>";
+
                 }
             } else {
                 echo "<script>

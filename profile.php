@@ -106,6 +106,49 @@ if ($userData):
     </div>
 
     <!-- Koleksi Pribadi Section -->
+    <style>
+    .card {
+        height: 100%; /* Buat card mengambil seluruh ruang yang tersedia */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card-img-top {
+        height: 550px; /* Sesuaikan tinggi gambar agar seragam */
+        object-fit: cover; /* Potong gambar jika ukurannya berbeda untuk menjaga proporsi */
+    }
+
+    .card-body {
+        flex-grow: 1; /* Membuat bagian body card mengambil ruang yang tersisa */
+    }
+
+    .card-title, .card-text {
+        margin-bottom: 10px; /* Berikan jarak antar elemen */
+    }
+
+    .card h5 {
+        font-size: 1.1rem; /* Atur ukuran teks judul agar lebih serasi */
+    }
+
+    .card-text {
+        font-size: 0.9rem; /* Sesuaikan ukuran font teks agar terlihat rapi */
+    }
+
+    .card {
+        height: 100%; /* Membuat card memenuhi seluruh ruang yang tersedia */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .row {
+        margin-top: 20px; /* Berikan jarak antar row */
+    }
+
+    .col-md-3 {
+        margin-bottom: 20px; /* Jarak antara card di bawahnya */
+    }
+</style>
+
     <div class="row mt-5">
         <div class="col-md-12">
             <h3><center>Koleksi Pribadi</center></h3>

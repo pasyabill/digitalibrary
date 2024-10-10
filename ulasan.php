@@ -95,10 +95,11 @@ if (!isset($_SESSION['id_user'])) {
                               VALUES ('$id_user', '$id_buku', '$ulasan', '$rating')";
                     if (mysqli_query($koneksi, $query)) {
                         echo "<script>
-                                swal('Success!', 'Terimakasih, ulasan berhasil dikirim!', 'success').then(function() {
-                                    window.location = 'index.php';
-                                });
-                              </script>";
+                    swal('Success!', 'Terimakasih, ulasan berhasil dikirim!', 'success').then(function() {
+                        window.location.href = 'profile.php'; // Redirect ke halaman profile.php
+                    });
+                </script>";
+
                     } else {
                         echo "<script>
                                 swal('Error!', 'Terjadi kesalahan: " . mysqli_error($koneksi) . "', 'error').then(function() {

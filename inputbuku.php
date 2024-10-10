@@ -11,7 +11,7 @@
 <body>
     <div class="container mt-5">
         <h2 class="text-center">Input Buku</h2>
-        <form action="" method="POST" enctype="multipart/form-data"> <!-- Tambahkan enctype -->
+        <form action="" method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="id_buku" class="form-label">Id Buku</label>
                 <input type="text" class="form-control" id="id_buku" name="id_buku" placeholder="Masukkan id buku" required>
@@ -35,11 +35,18 @@
             <div class="mb-3">
                 <label for="kategori" class="form-label">Kategori</label>
                 <select class="form-select col-12" name="kategori">
-                    <option selected="" value="option-1">Pilih Kategori</option>
-                    <option value="novel">Novel</option>
-                    <option value="komik">Komik</option>
-                    <option value="ensiklopedi">Ensiklopedi</option>
-                    <option value="majalah">Majalah</option>
+                    <option selected="" value="">Pilih Kategori</option>
+
+                    <!-- PHP untuk menampilkan pilihan kategori dari database -->
+                    <?php
+                    include 'koneksi.php';
+                    $sql_kategori = "SELECT id_kategori, nama_kategori FROM kategori";
+                    $result_kategori = mysqli_query($koneksi, $sql_kategori);
+
+                    while ($row = mysqli_fetch_assoc($result_kategori)) {
+                        echo "<option value='" . $row['id_kategori'] . "'>" . $row['nama_kategori'] . "</option>";
+                    }
+                    ?>
                 </select>
             </div>
             <div class="mb-3">
@@ -55,7 +62,7 @@
         </form>
 
         <?php
-if (isset($_POST['submit'])){
+if (isset($_POST['submit'])) {
     include 'koneksi.php';
 
     $id_buku = $_POST['id_buku'];
@@ -63,7 +70,7 @@ if (isset($_POST['submit'])){
     $penulis = $_POST['penulis'];
     $penerbit = $_POST['penerbit'];
     $tahun_terbit = $_POST['tahun_terbit'];
-    $kategori = $_POST['kategori'];
+    $id_kategori = $_POST['kategori']; // Menggunakan id_kategori dari dropdown
 
     // File upload handling
     $img = $_FILES['img']['name'];
@@ -72,21 +79,22 @@ if (isset($_POST['submit'])){
     $pdf_tmp = $_FILES['file_pdf']['tmp_name'];
 
     // Correcting the target paths
-    $img_target = __DIR__ . "/assets/img/" . basename($img);  // Absolute path for image
-    $pdf_target = __DIR__ . "/assets/pdf/" . basename($pdf);  // Absolute path for PDF
+    $img_target = __DIR__ . "/assets/img/" . basename($img);
+    $pdf_target = __DIR__ . "/assets/pdf/" . basename($pdf);
 
     // Check if directories exist, if not create them
     if (!file_exists(__DIR__ . '/assets/img')) {
-        mkdir(__DIR__ . '/assets/img', 0777, true);  // Create folder if it doesn't exist
+        mkdir(__DIR__ . '/assets/img', 0777, true);
     }
     if (!file_exists(__DIR__ . '/assets/pdf')) {
-        mkdir(__DIR__ . '/assets/pdf', 0777, true);  // Create folder if it doesn't exist
+        mkdir(__DIR__ . '/assets/pdf', 0777, true);
     }
 
     // Move the uploaded files to the correct location
     if (move_uploaded_file($img_tmp, $img_target) && move_uploaded_file($pdf_tmp, $pdf_target)) {
-        $sql = "INSERT INTO `buku` (`id_buku`, `judul`, `penulis`, `penerbit`, `tahun_terbit`, `status`, `kategori`, `img`, `file_buku`) 
-                VALUES ('$id_buku', '$judul', '$penulis', '$penerbit', '$tahun_terbit', 'tersedia', '$kategori', '$img', '$pdf');";
+        // Menyimpan data buku dan menggunakan id_kategori sebagai referensi ke tabel kategori
+        $sql = "INSERT INTO `buku` (`id_buku`, `judul`, `penulis`, `penerbit`, `tahun_terbit`, `status`, `id_kategori`, `img`, `file_buku`) 
+                VALUES ('$id_buku', '$judul', '$penulis', '$penerbit', '$tahun_terbit', 'tersedia', '$id_kategori', '$img', '$pdf');";
         
         $query = mysqli_query($koneksi, $sql);
         if ($query) {

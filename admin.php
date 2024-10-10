@@ -44,7 +44,6 @@ ini_set('display_errors', 1);  ?>
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="#hero" class="active">Home<br></a></li>
-          <li><a href="inputbuku.php">Input Buku</a></li>
           <li><a href="#dashboard">Dashboard</a></li>
           <li><a href="#buku">Hapus Buku</a></li> 
           <li><a href="#gallery">Gallery</a></li>
@@ -82,7 +81,7 @@ if (!isset($_SESSION['username'])) {
             <p data-aos="fade-up" data-aos-delay="100">Selamat Datang di Dashboard Admin Perpustakaan Digital.</p>
             <div class="d-flex" data-aos="fade-up" data-aos-delay="200">
               <a href="inputbuku.php" class="btn-get-started">Input Buku</a>
-              <a href="https://youtu.be/BDDz1TnumNw?si=rxIJ7g3BdI1TOvD5" class="glightbox btn-watch-video d-flex align-items-center"><i class="bi bi-play-circle"></i><span>Watch Video</span></a>
+              <a href="input_kategori.php" class="btn-get-started"> Input Kategori</a>
             </div>
           </div>
           <div class="col-lg-5 order-1 order-lg-2 hero-img" data-aos="zoom-out">
@@ -99,12 +98,13 @@ if (!isset($_SESSION['username'])) {
 
     include 'koneksi.php';
 
-    // Query untuk mengambil data peminjaman
+    // Query untuk mengambil data peminjaman, hanya yang statusnya bukan 'returned'
     $query = "SELECT p.id_peminjaman, p.tanggal_peminjaman, p.tanggal_pengembalian, p.status_peminjaman, 
                      b.judul, u.username, p.id_buku, u.id_user
               FROM peminjaman p
               JOIN buku b ON p.id_buku = b.id_buku
-              JOIN user u ON p.id_user = u.id_user";
+              JOIN user u ON p.id_user = u.id_user
+              WHERE p.status_peminjaman != 'returned'";
     $result = mysqli_query($koneksi, $query);
     if (!$result) {
         die("Error saat mengambil data peminjaman: " . mysqli_error($koneksi));
@@ -180,8 +180,6 @@ if (!isset($_SESSION['username'])) {
                                 <input type="hidden" name="id_peminjaman" value="<?= $row['id_peminjaman'] ?>">
                                 <button type="submit" name="action" value="return" class="btn btn-warning btn-sm">Pengembalian</button>
                             </form>
-                        <?php elseif ($row['status_peminjaman'] == 'returned') : ?>
-                            <span class="text-success">Buku Sudah Dikembalikan</span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -345,18 +343,15 @@ mysqli_close($koneksi);
 
     </table>
 </div>
-
-            
-
       </div>
     </section>
 
 
     <section id="buku" class="tabel-buku">
     <div class="container section-title" data-aos="fade-up">
-    <p><span>Daftar</span> <span class="description-title">Buku</span></p>
+        <p><span>Daftar</span> <span class="description-title">Buku</span></p>
     </div>
-    </div>
+</div>
 <div class="container mt-1">
     <div class="row mb-2">
         <div class="col-12 text-center">
@@ -372,34 +367,42 @@ mysqli_close($koneksi);
             <form method="GET" action="" class="d-flex justify-content-center">
                 <select name="kategori" class="form-control" style="width: 300px; margin-right: 10px;">
                     <option value="">Semua Kategori</option>
-                    <option value="novel">Novel</option>
-                    <option value="komik">Komik</option>
-                    <option value="majalah">Majalah</option>
-                    <option value="ensiklopedi">Ensiklopedi</option>
+                    <?php
+                    // Ambil kategori dari database
+                    include 'koneksi.php';
+                    $kategoriQuery = "SELECT * FROM kategori";
+                    $kategoriResult = mysqli_query($koneksi, $kategoriQuery);
+                    while ($kategoriRow = mysqli_fetch_assoc($kategoriResult)) {
+                        echo '<option value="' . $kategoriRow['id_kategori'] . '">' . $kategoriRow['nama_kategori'] . '</option>';
+                    }
+                    ?>
                 </select>
                 <button type="submit" class="btn btn-danger">Filter</button>
             </form>
         </div>
     </div>
 </div>
+
 <div class="container mt-5">
     <div class="row">
         <?php
-        include 'koneksi.php';
-
         // Ambil parameter pencarian dan kategori jika ada
         $search = isset($_GET['search']) ? $_GET['search'] : '';
         $kategori = isset($_GET['kategori']) ? $_GET['kategori'] : '';
-        $query = "SELECT * FROM buku";
+        
+        // Mulai query dengan join antara buku dan kategori
+        $query = "SELECT buku.*, kategori.nama_kategori FROM buku 
+                  JOIN kategori ON buku.id_kategori = kategori.id_kategori";
 
         // Jika ada pencarian, tambahkan kondisi WHERE
         if ($search) {
-            $query .= " WHERE judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
+            $query .= " WHERE buku.judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
         }
 
         // Jika ada kategori yang dipilih, tambahkan kondisi WHERE
         if ($kategori) {
-            $query .= $search ? " AND kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" : " WHERE kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
+            $query .= $search ? " AND buku.id_kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" 
+                              : " WHERE buku.id_kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
         }
 
         $result = mysqli_query($koneksi, $query);
@@ -410,26 +413,26 @@ mysqli_close($koneksi);
                 $imageFileName = $row['img'];
         ?>
                 <div class="col-6 col-md-3 mb-4">
-    <div class="card h-100 shadow-sm">
-        <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
-            <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        <div class="card-body p-3">
-            <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
-            <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
-            <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
-            <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
-            <p class="card-text text-center mb-1"><strong>Status:</strong> <?php echo $row['status']; ?></p>
-            <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
-        </div>
-        <div class="card-footer text-center p-2">
-            <form action="hapus_buku.php" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?');">
-                <input type="hidden" name="id_buku" value="<?php echo $row['id_buku']; ?>">
-                <button type="submit" class="btn btn-danger btn-sm">Hapus Buku</button>
-            </form>
-        </div>
-    </div>
-</div>
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-img-top-container" style="overflow: hidden; height: 450px;">
+                            <img src="./assets/img/<?php echo $imageFileName; ?>" class="card-img-top" alt="Gambar Buku" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        <div class="card-body p-3">
+                            <h3 class="card-title text-center font-weight-bold"><?php echo $row['judul']; ?></h3>
+                            <p class="card-text text-center mb-1"><strong>Penulis:</strong> <?php echo $row['penulis']; ?></p>
+                            <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
+                            <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
+                            <p class="card-text text-center mb-1"><strong>Status:</strong> <?php echo $row['status']; ?></p>
+                            <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['nama_kategori']; ?></p>
+                        </div>
+                        <div class="card-footer text-center p-2">
+                            <form action="hapus_buku.php" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus buku ini?');">
+                                <input type="hidden" name="id_buku" value="<?php echo $row['id_buku']; ?>">
+                                <button type="submit" class="btn btn-danger btn-sm">Hapus Buku</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
         <?php
             }
@@ -439,10 +442,8 @@ mysqli_close($koneksi);
         ?>
     </div>
 </div>
+</section>
 
-      </div>
-      </div>
-    </section>
     <!-- Gallery Section -->
     <section id="gallery" class="gallery section light-background">
 

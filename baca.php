@@ -54,7 +54,7 @@ body {
     overflow: hidden;
 }
     </style>
-    <embed src="<?php echo $pdfPath; ?>#toolbar=0&navpanes=0" height="500" width="1000" sandbox="allow-scripts allow-same-origin"></embed>
+    <embed src="<?php echo $pdfPath; ?>#toolbar=0&navpanes=0" height="1000" width="1400" sandbox="allow-scripts allow-same-origin"></embed>
     </body>
     <footer>
 

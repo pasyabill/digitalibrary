@@ -154,7 +154,7 @@
     <div class="container section-title" data-aos="fade-up">
     <p><span>Daftar</span> <span class="description-title">Buku</span></p>
     </div>
-    </div>
+</div>
 <div class="container mt-1">
     <div class="row mb-2">
         <div class="col-12 text-center">
@@ -170,10 +170,15 @@
             <form method="GET" action="" class="d-flex justify-content-center">
                 <select name="kategori" class="form-control" style="width: 300px; margin-right: 10px;">
                     <option value="">Semua Kategori</option>
-                    <option value="novel">Novel</option>
-                    <option value="komik">Komik</option>
-                    <option value="majalah">Majalah</option>
-                    <option value="ensiklopedi">Ensiklopedi</option>
+                    <?php
+                    // Ambil kategori dari database
+                    include 'koneksi.php';
+                    $kategoriQuery = "SELECT * FROM kategori";
+                    $kategoriResult = mysqli_query($koneksi, $kategoriQuery);
+                    while ($kategoriRow = mysqli_fetch_assoc($kategoriResult)) {
+                        echo '<option value="' . $kategoriRow['id_kategori'] . '">' . $kategoriRow['nama_kategori'] . '</option>';
+                    }
+                    ?>
                 </select>
                 <button type="submit" class="btn btn-danger">Filter</button>
             </form>
@@ -182,24 +187,23 @@
 </div>
 <div class="container mt-5">
     <div class="row">
-    <div class="container mt-5">
-    <div class="row">
     <?php
 include 'koneksi.php';
 
 // Ambil parameter pencarian dan kategori jika ada
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 $kategori = isset($_GET['kategori']) ? $_GET['kategori'] : '';
-$query = "SELECT * FROM buku";
+$query = "SELECT buku.*, kategori.nama_kategori FROM buku JOIN kategori ON buku.id_kategori = kategori.id_kategori";
 
 // Jika ada pencarian, tambahkan kondisi WHERE
 if ($search) {
-    $query .= " WHERE judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
+    $query .= " WHERE buku.judul LIKE '%" . mysqli_real_escape_string($koneksi, $search) . "%'";
 }
 
 // Jika ada kategori yang dipilih, tambahkan kondisi WHERE
 if ($kategori) {
-    $query .= $search ? " AND kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" : " WHERE kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
+    $query .= $search ? " AND buku.id_kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'" 
+                      : " WHERE buku.id_kategori='" . mysqli_real_escape_string($koneksi, $kategori) . "'";
 }
 
 $result = mysqli_query($koneksi, $query);
@@ -226,7 +230,7 @@ if (mysqli_num_rows($result) > 0) {
                     <p class="card-text text-center mb-1"><strong>Penerbit:</strong> <?php echo $row['penerbit']; ?></p>
                     <p class="card-text text-center mb-1"><strong>Tahun Terbit:</strong> <?php echo $row['tahun_terbit']; ?></p>
                     <p class="card-text text-center mb-1"><strong>Status:</strong> <?php echo $row['status']; ?></p>
-                    <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['kategori']; ?></p>
+                    <p class="card-text text-center mb-1"><strong>Kategori:</strong> <?php echo $row['nama_kategori']; ?></p>
                 </div>
                 <div class="card-footer text-center p-2">
                     <a href="pinjam.php?id=<?php echo $row['id_buku']; ?>" class="btn btn-danger btn-sm">Pinjam</a>
@@ -275,16 +279,11 @@ if (mysqli_num_rows($result) > 0) {
     echo '<p class="text-center">Tidak ada buku yang ditemukan.</p>';
 }
 ?>
-
     </div>
 </div>
 
-    </div>
-</div>
+</section>
 
-      </div>
-      </div>
-    </section>
     <!-- Gallery Section -->
     <section id="gallery" class="gallery section light-background">
 
